@@ -15,6 +15,10 @@ public class ThreadPool
      * BlockingQueue is a interface that allows us
      * to choose the type of implementation of the queue.
      * In this case we are using a LinkedBlockingQueue.
+     *
+     * BlockingQueue as the name implies will block
+     * any thread requesting from it if the queue is empty
+     * but only if you use the correct function
      */
     private ThreadPool(int numWorkers)
     {
@@ -35,6 +39,9 @@ public class ThreadPool
      * Note that this function only has package scoped
      * as it should only be called with the package by
      * a worker
+     * 
+     * Make sure to use the correct functions that will
+     * block a thread if the queue is unavailable or empty
      */
     ClientRequest takeRequest()
     {
