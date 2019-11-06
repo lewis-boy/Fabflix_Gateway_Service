@@ -3,12 +3,11 @@ package edu.uci.ics.UCNETID.service.gateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import edu.uci.ics.UCNETID.service.gateway.configs.*;
-import edu.uci.ics.UCNETID.service.gateway.connectionpool.ConnectionPool;
+import edu.uci.ics.UCNETID.service.gateway.connectionpool.ConnectionPoolManager;
 import edu.uci.ics.UCNETID.service.gateway.logger.ServiceLogger;
 import edu.uci.ics.UCNETID.service.gateway.threadpool.ThreadPool;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.internal.util.ExceptionUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
@@ -16,9 +15,6 @@ import javax.ws.rs.core.UriBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 public class GatewayService {
 
@@ -32,7 +28,7 @@ public class GatewayService {
     private static BillingConfigs billingConfigs;
     private static ThreadConfigs threadConfigs;
 
-    private static ConnectionPool connectionPool;
+    private static ConnectionPoolManager connectionPoolManager;
     private static ThreadPool threadPool;
 
     public static void main(String[] args) {
@@ -57,12 +53,14 @@ public class GatewayService {
         threadConfigs.currentConfigs();
 
         //Initialize pools
-        connectionPool = new ConnectionPool(threadConfigs.getNumThreads(),
-                                            serviceConfigs.getDbDriver(),
-                                            serviceConfigs.getDbUrl(),
-                                            serviceConfigs.getDbUsername(),
-                                            serviceConfigs.getDbPassword());
-        threadPool  = new ThreadPool(threadConfigs.getNumThreads());
+        connectionPoolManager = ConnectionPoolManager.createConPool(
+                serviceConfigs.getDbUrl(),
+                serviceConfigs.getDbUsername(),
+                serviceConfigs.getDbPassword(),
+                threadConfigs.getNumThreads());
+
+
+        threadPool = ThreadPool.createThreadPool(threadConfigs.getNumThreads());
 
         // Initialize HTTP sever
         initHTTPServer();
@@ -214,8 +212,8 @@ public class GatewayService {
 
     public static BillingConfigs getBillingConfigs() { return billingConfigs; }
 
-    public static ConnectionPool getConnectionPool() {
-        return connectionPool;
+    public static ConnectionPoolManager getConnectionPoolManager() {
+        return connectionPoolManager;
     }
 
     public static ThreadPool getThreadPool() {
